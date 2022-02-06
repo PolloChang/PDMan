@@ -1,0 +1,38 @@
+{{
+    var today=new Date();
+    var fullYear=today.getFullYear();
+    var month=today.getMonth() + 1;
+    var days=today.getDate();
+}}
+ /**
+ * @author : PDMan v3.5.5
+ * @date : {{=fullYear}}-{{=month}}-{{=days}}
+ * @desc : {{=it.func.join(it.entity.defName,it.entity.comment,'-')}}
+ */
+class {{=it.func.camel(it.entity.defKey,true) }}{
+
+    static auditable = [ignore: ['dateCreated', 'lastUpdated', 'manCreated', 'manLastUpdated']]
+    {{~it.entity.fields:field:index}}
+    {{? it.func.upperCase(field.type,true) == 'VARCHAR'    && !field.primaryKey && field.defKey != "VERSION"}}String  {{=it.func.camel(field.defKey,false)}}{{= field.defaultValue ? it.func.join(' = ',field.defaultValue,'') : '' }}
+    {{?? it.func.upperCase(field.type,true) == 'INT4'      && !field.primaryKey && field.defKey != "VERSION"}}Integer {{=it.func.camel(field.defKey,false)}}{{= field.defaultValue ? it.func.join(' = ',field.defaultValue,'') : '' }}
+    {{?? it.func.upperCase(field.type,true) == 'NUMERIC'   && !field.primaryKey && field.defKey != "VERSION"}}Integer {{=it.func.camel(field.defKey,false)}}{{= field.defaultValue ? it.func.join(' = ',field.defaultValue,'') : '' }}
+    {{?? it.func.upperCase(field.type,true) == 'TIMESTAMP' && !field.primaryKey && field.defKey != "VERSION"}}Date    {{=it.func.camel(field.defKey,false)}}{{= field.defaultValue ? it.func.join(' = new Date()') : '' }}
+    {{?? !field.primaryKey && field.defKey != "VERSION"}}{{=field.type}}    {{=it.func.camel(field.defKey,false)}}{{?}}{{~}}
+    $blankline
+    static mapping = {
+        table "{{=it.entity.defKey}}"
+        comment "{{=it.func.join(it.entity.defName,it.entity.comment,'-')}}"
+        {{~it.entity.fields:field:index}}
+        {{? field.primaryKey }}id              column: "{{=it.func.upperCase(field.defKey,true)}}" 
+        {{?? !field.primaryKey && field.defKey != "VERSION"}}{{=it.func.camel(field.defKey,false)}} column: "{{=it.func.upperCase(field.defKey,true)}}" ,comment:"{{=it.func.join(field.defName,field.comment,';')}}"
+        {{?}}{{~}}
+    }
+    $blankline
+    static constraints = {
+        {{~it.entity.fields:field:index}}
+        {{? field.type == 'varchar' && !field.primaryKey && field.defKey != "VERSION"}}{{=it.func.camel(field.defKey,false)}} (nullable:{{= field.notNull ? ' false' : 'true' }},blank:{{= field.notNull ? ' false' : 'true' }}{{?field.len>0}},maxSize:{{=field.len}}{{?}})
+        {{?? !field.primaryKey && field.defKey != "VERSION"}}{{=it.func.camel(field.defKey,false)}} (nullable:{{= field.notNull ? ' false' : 'true' }})
+        {{?}}{{~}}
+    }
+
+}

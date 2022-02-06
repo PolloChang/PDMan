@@ -1,0 +1,13 @@
+ {{
+    var today=new Date();
+    var fullYear=today.getFullYear();
+    var month=today.getMonth() + 1;
+    var days=today.getDate();
+}}
+# @author : PDMan v3.5.5
+# @date : {{=fullYear}}-{{=month}}-{{=days}}
+# @desc : {{=it.func.join(it.entity.defName,it.entity.comment,'-')}}
+$blankline
+{{~it.entity.fields:field:index}}
+{{=it.func.lowerCase(it.entity.defKey,true)}}.{{=it.func.camel(field.defKey,false)}}.label = {{=it.func.join(field.defName,field.comment,';')}}
+{{~}}

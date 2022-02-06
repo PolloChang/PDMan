@@ -1,0 +1,51 @@
+ {{
+    var today=new Date();
+    var fullYear=today.getFullYear();
+    var month=today.getMonth() + 1;
+    var days=today.getDate();
+}}
+ <%--
+ @author : PDMan v3.5.5
+ @date : {{=fullYear}}-{{=month}}-{{=days}}
+ @desc : {{=it.func.join(it.entity.defName,it.entity.comment,'-')}}
+ --%>
+{{~it.entity.fields:field:index}}
+{{? 
+    it.func.camel(field.defKey,false) == ("objid") ||
+    it.func.camel(field.defKey,false) == ("version")
+}}<g:hiddenField name="{{=it.func.lowerCase(it.entity.defKey,true)}}.{{=it.func.camel(field.defKey,false)}}" value="${{{=it.func.lowerCase(it.entity.defKey,true)}}I.{{=it.func.camel(field.defKey,false)}}}" />{{?}}
+{{~}}
+<table class="table table-bordered">
+    <colgroup>
+        <col width="15%">
+        <col width="35%">
+        <col width="15%">
+        <col width="35%">
+    </colgroup>
+    <thead>
+    <tr>
+        <th colspan="4">
+            <asset:image src="/icons/border-width.svg"/>
+            編輯資料
+        </th>
+    </tr>
+    </thead>
+    <tbody>
+    {{~it.entity.fields:field:index}}{{? 
+            it.func.camel(field.defKey,false) != ("objid") &&
+            it.func.camel(field.defKey,false) != ("version") &&
+            it.func.camel(field.defKey,false) != ("manCreated") &&
+            it.func.camel(field.defKey,false) != ("dateCreated") &&
+            it.func.camel(field.defKey,false) != ("manLastUpdated") &&
+            it.func.camel(field.defKey,false) != ("lastUpdated")
+        }}
+        {{?(index+1)%2==1}}<tr>{{?}}
+            <th>
+                ${message(code: "{{=it.func.lowerCase(it.entity.defKey,true)}}.{{=it.func.camel(field.defKey,false)}}.label")}
+            </th>
+            <td>
+                <dict:textField name="{{=it.func.lowerCase(it.entity.defKey,true)}}.{{=it.func.camel(field.defKey,false)}}" value="${{{=it.func.lowerCase(it.entity.defKey,true)}}I.{{=it.func.camel(field.defKey,false)}}}" />
+            </td>
+        {{?(index+1)%2==0}}</tr>{{?}}{{?}}{{~}}
+    </tbody>
+</table>
