@@ -1,0 +1,248 @@
+
+{{
+    var today=new Date();
+    var fullYear=today.getFullYear();
+    var month=today.getMonth() + 1;
+    var days=today.getDate();
+    var domain = it.func.lowerCase(it.entity.defKey,true);
+    var domainClass =  it.func.camel(it.entity.defKey,true);
+    var domainI = it.func.lowerCase(it.entity.defKey,true)+"I";
+    var domainL = it.func.lowerCase(it.entity.defKey,true)+"L";
+    var columnL = [];
+    
+    it.entity.fields.forEach(function(field, index, array) {
+      if(
+        it.func.camel(field.defKey,false) != "objid" &&
+        it.func.camel(field.defKey,false) != "version" &&
+        it.func.camel(field.defKey,false) != "manCreated" &&
+        it.func.camel(field.defKey,false) != "dateCreated" &&
+        it.func.camel(field.defKey,false) != "manLastUpdated" &&
+        it.func.camel(field.defKey,false) != "lastUpdated"
+      ){
+          columnL.push(field);
+      }
+    });
+    
+    
+}}
+
+import grails.web.databinding.DataBinder
+import grails.gorm.transactions.Transactional
+import grails.web.servlet.mvc.GrailsParameterMap
+import org.springframework.context.MessageSource
+$blankline
+$blankline
+ /**
+ * @author : PDMan v3.5.5
+ * @date : {{=fullYear}}-{{=month}}-{{=days}}
+ * @desc : {{=it.func.join(it.entity.defName,it.entity.comment,'-')}}
+ */
+@Transactional
+class {{=domainClass}}Service implements DataBinder {
+    $blankline
+    MessageSource messageSource
+    $blankline
+    LinkedHashMap filter(GrailsParameterMap params){
+        $blankline
+        LinkedHashMap result = [:]
+        $blankline
+        String[] strL = []
+        String[] booleanL = []
+        String[] likeL = []
+        String[] mulSelectL = []
+        String[] longL = []
+        $blankline
+        String[] dtL = []
+        def dtSEL = []
+        dtL.each {
+            dtSEL << "${it}1"
+            dtSEL << "${it}2"
+        }
+        $blankline
+        def {{=domainL}} = {{=domainClass}}.createCriteria().list() {
+            $blankline
+            strL.each {
+                if(params?."${it}"){
+                    eq(it, params?."${it}")
+                }
+            }
+            $blankline
+            longL.each {
+                if(params?."${it}"){
+                    eq(it, params?.long("${it}"))
+                }
+            }
+            $blankline
+            booleanL.each {
+                if(params?."${it}"){
+                    eq(it, Boolean.parseBoolean(params?."${it}"))
+                }
+            }
+            $blankline
+            likeL.each {
+                if(params?."${it}"){
+                    ilike("${it}", "%"+params?."${it}"+"%")
+                }
+            }
+            $blankline
+            dtL.each {
+                if(params?."${it}1"){
+                    ge("${it}",params?."${it}S")
+                }
+                if(params?."${it}2"){
+                    le("${it}",params?."${it}E")
+                }
+            }
+            $blankline
+            mulSelectL.each {
+                if(params?."${it}"){
+                    def selectL = params?.list("${it}")
+                    def columnName = abService.changeStyle(it,false)
+                    or {
+                        selectL.each { it2 ->
+                            sqlRestriction(" instr(',' || '${it2}' || ',' , ',' || this_.${columnName} || ',') > 0  ")
+                        }
+                    }
+                }
+            }
+
+            order("id", "desc") // 新資料放在前面, 可依照系統調整
+        }
+        $blankline
+        result.rows = {{=domainL}}.collect { it ->
+            [
+                    {{~columnL:field:index}}
+                    {{=it.func.camel(field.defKey,false)}}  :   it?.{{=it.func.camel(field.defKey,false)}},
+                    {{~}}
+            ]
+        }
+        $blankline
+        return result
+    }
+    $blankline
+    $blankline
+    /**
+     * 新增資料
+     * @param params
+     * @return
+     */
+    LinkedHashMap insert(GrailsParameterMap params) {
+        return _saveInstance(new {{=domainClass}}(), params, { {{=domainClass}} {{=domainI}} ->
+            {{=domainI}}.manCreated = '系統管理員'
+            {{=domainI}}.validate()
+        })
+    }
+    $blankline
+    $blankline
+    /**
+     * 更新資料
+     * @param params
+     * @return
+     */
+    LinkedHashMap update(GrailsParameterMap params){
+        return _saveInstance({{=domainClass}}.get(params.id as long), params, { {{=domainClass}} {{=domainI}} ->
+            {{=domainI}}.manLastUpdated = '系統管理員'
+            {{=domainI}}.validate()
+        })
+    }
+    $blankline
+    $blankline
+    /**
+     * 共同處理
+     * @param {{=domainI}}
+     * @param params
+     * @param closure
+     * @return
+     */
+    LinkedHashMap _saveInstance({{=domainClass}} {{=domainI}}, GrailsParameterMap params, Closure<?> closure) {
+        $blankline
+        LinkedHashMap result = [
+                actionType:false,
+                acrtionMessage:''
+        ]
+        $blankline
+        result.bean = {{=domainI}}
+        closure({{=domainI}})
+        $blankline
+        List include_col = [
+            {{~columnL:field:index}}'{{=it.func.camel(field.defKey,false)}}',{{~}}
+        ]
+        $blankline
+        bindData({{=domainI}}, params["{{=domain}}"], [include:include_col])
+        int pageDataVersion = params.{{=domain}}.version?(params.{{=domain}}?.version as int):0
+        if({{=domainI}}.version != pageDataVersion && params.{{=domain}}.id){
+            result.dataVersionDifferent = true
+            {{=domainI}}.discard()
+        } else if ({{=domainI}}.hasErrors()) { //失敗
+            def errorColumn = []
+            $blankline
+            {{=domainI}}.errors.allErrors.eachWithIndex  {item, index ->
+                errorColumn[index] = [item?.arguments,item?.defaultMessage]
+            }
+            $blankline
+            {{=domainI}}.discard()
+            result.actionType = false
+        }
+        else{
+            $blankline
+            try{
+                {{=domainI}}.save(flush: true)
+                result.actionType = true
+            }catch(Exception ex){
+                result.actionType = false
+                ex.printStackTrace()
+                {{=domainI}}.discard()
+            }
+            $blankline
+            if(result.actionType){
+                result.actionMessage = messageSource.getMessage("default.updated.message", [] as Object[], Locale.TAIWAN)
+            }
+            else{
+                result.actionMessage = messageSource.getMessage("default.updated.message", [] as Object[], Locale.TAIWAN)
+            }
+        }
+        $blankline
+        return result
+    }
+    $blankline
+    $blankline
+    /**
+     * 刪除資料
+     * @param params
+     * @return
+     */
+    LinkedHashMap delete(GrailsParameterMap params){
+
+        LinkedHashMap result = [
+                actionType : false,
+                acrtionMessage : '',
+                bean : {{=domainClass}}
+        ]
+        $blankline
+        {{=domainClass}} {{=domainI}} = result.bean = {{=domainClass}}.get(params.id as long)
+        int pageDataVersion = params.{{=domain}}.version?(params.{{=domain}}?.version as int):0
+        if({{=domainI}}.version != pageDataVersion && params.{{=domain}}.id){
+            result.dataVersionDifferent = true
+            {{=domainI}}.discard()
+        }else{
+            $blankline
+            try{
+                {{=domainI}}.delete()
+                result.actionType = true
+            }catch(Exception ex){
+                result.actionType = false
+                ex.printStackTrace()
+                {{=domainI}}.discard()
+            }
+            $blankline
+            if(result.actionType){
+                result.actionMessage = messageSource.getMessage("default.deleted.message", [] as Object[], Locale.TAIWAN)
+            }
+            else{
+                result.actionMessage = messageSource.getMessage("default.not.deleted.message", [] as Object[], Locale.TAIWAN)
+            }
+        }
+        $blankline
+        return result
+    }
+}
