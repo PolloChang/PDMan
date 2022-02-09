@@ -1,0 +1,68 @@
+{{
+    var today=new Date();
+    var fullYear=today.getFullYear();
+    var month=today.getMonth() + 1;
+    var days=today.getDate();
+    var domain = it.func.lowerCase(it.entity.defKey,true);
+    var domainClass =  it.func.camel(it.entity.defKey,true);
+    var domainI = it.func.lowerCase(it.entity.defKey,true)+"I";
+    var domainL = it.func.lowerCase(it.entity.defKey,true)+"L";
+    var columnL = [];
+    
+    it.entity.fields.forEach(function(field, index, array) {
+      if(
+        it.func.camel(field.defKey,false) != "objid" &&
+        it.func.camel(field.defKey,false) != "version" &&
+        it.func.camel(field.defKey,false) != "manCreated" &&
+        it.func.camel(field.defKey,false) != "dateCreated" &&
+        it.func.camel(field.defKey,false) != "manLastUpdated" &&
+        it.func.camel(field.defKey,false) != "lastUpdated"
+      ){
+          columnL.push(field);
+      }
+    });
+}}
+
+<!--
+@author : PDMan v3.5.5
+@date : {{=fullYear}}-{{=month}}-{{=days}}
+@desc : {{=it.func.join(it.entity.defName,it.entity.comment,'-')}}
+-->
+
+
+<table
+        id="{{=domain}}-filter"
+        data-toggle="table"
+        data-pagination="true"
+>
+    <thead>
+    <tr>
+        <th data-formatter="indexFormatter" data-align="center" data-width="50">#</th>
+        <th data-field="id" data-formatter="linkFormatter" data-width="50">${message(code: "{{=domain}}.id.label")}</th>
+        {{~columnL:field:index}}
+        <th data-field="{{=it.func.camel(field.defKey,false)}}">${message(code: "{{=domain}}.{{=it.func.camel(field.defKey,false)}}.label")}</th>
+        {{~}}
+    </tr>
+    </thead>
+</table>
+<script type="text/javascript">
+
+
+    /**
+     * 顯示編輯按鈕
+     * @param value
+     * @param row
+     * @returns {string}
+     */
+    function linkFormatter(value, row) {
+        return '<a ' +
+            'class="btn btn-link"'+
+            'data-dict="openTab"'+
+            'data-tab-id="'+row.id+'"'+
+            'data-tab-title="'+row.strings+'"'+
+            'data-url="${createLink(controller: "{{=domain}}",action: "editPage")}/' + row.id+'"'+
+            '>' +
+            value +
+            '</a>';
+    }
+</script>

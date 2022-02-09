@@ -9,12 +9,8 @@
  @date : {{=fullYear}}-{{=month}}-{{=days}}
  @desc : {{=it.func.join(it.entity.defName,it.entity.comment,'-')}}
  --%>
-{{~it.entity.fields:field:index}}
-{{? 
-    it.func.camel(field.defKey,false) == ("objid") ||
-    it.func.camel(field.defKey,false) == ("version")
-}}<g:hiddenField name="{{=it.func.lowerCase(it.entity.defKey,true)}}.{{=it.func.camel(field.defKey,false)}}" value="${{{=it.func.lowerCase(it.entity.defKey,true)}}I.{{=it.func.camel(field.defKey,false)}}}" />{{?}}
-{{~}}
+<g:hiddenField name="{{=it.func.lowerCase(it.entity.defKey,true)}}.id" value="${{{=it.func.lowerCase(it.entity.defKey,true)}}.id}" />
+<g:hiddenField name="{{=it.func.lowerCase(it.entity.defKey,true)}}.version" value="${{{=it.func.lowerCase(it.entity.defKey,true)}}.version}" />
 <table class="table table-bordered">
     <colgroup>
         <col width="15%">
